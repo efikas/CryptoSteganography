@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Hide It</title>
+
+    <!-- Bootstrap -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+      <header>
+        <h1>HIDE IT</h1>
+      </header>
+    <div class="container">
+      <div class="main-container">
+          <ul class="nav nav-tabs">
+              <li class="active"><a data-toggle="tab" href="#sectionA">Encode</a></li>
+              <li><a data-toggle="tab" href="#sectionB">Decode</a></li>
+          </ul>
+      <div class="content tab-content">
+          <div id="sectionA" class="tab-pane fade in active">
+            <div class="row">
+                <div class="col-md-4">
+                    <div id="original" class="half">
+                      <h2>Plain Image:</h2>
+                      <img id="img" src="./assets/images/sample.png"/>
+                    </div>
+						<div class="upload-btn-wrapper text-center">
+							<button class="btn">Upload a image</button>
+							<input type="file" id="file" name="myfile" />
+						</div>
+						<br/>
+                </div>
+                <div class="col-md-4">
+                    <h3>Message:<span id="capacity"></span></h3>
+                    <textarea id="text"></textarea>
+						<h3>Password:<span id="capacity"></span></h3>
+						<input type="password" id="encodePassword" width="auto" />
+						<div class="btns">
+                        <span id="hide" class="btn">Encode</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div id="stego" class="half">
+						<h2>Encoded Image:</h2>
+						<div class="note">Click "D"-button or if it does not work perform right-click to download</div>
+                        <img id="cover"/>
+                        <a id="download" class="btn small" download="cover.png" rel="nofollow"><strong>D</strong></a>
+                        
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div id="sectionB" class="tab-pane fade">
+			<div class="row">
+					<div class="col-md-4">
+							<div id="decodeOriginal" class="decodeHalf">
+								<h2>Stego Image:</h2>
+								<img id="decodeImg" src="./assets/images/sample.png"/>
+							</div>
+							<div class="upload-btn-wrapper text-center">
+								<button class="btn">Upload a image</button>
+								<input type="file" id="decodeFile" name="decodefile" />
+							</div>
+							<br/>
+					</div>
+					<div class="col-md-3">
+							<h3>Password:<span id="capacity"></span></h3>
+							<input type="password" id="decodePassword" width="auto" />
+							<div class="btns">
+									<span id="read" class="btn">Decode</span>
+							</div>
+					</div>
+					<div class="col-md-5">
+							<div id="messageArea">
+									<h2>Message:</h2>
+									<div id="decodeMessage"></div>
+									<div id="message" class="invisible"></div>
+							</div>
+					</div>
+			</div>
+              
+          </div>
+      </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script type="text/javascript" src="assets/js/jquery-2.2.4.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="assets/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="assets/js/steganography.js"></script>
+		<script type="text/javascript" src="assets/js/blowfish.js"></script>
+		<script type="text/javascript">
+
+		function handleFileSelect(evt) {
+
+			var action = this.id;
+			console.log(action);
+			var original = document.getElementById("original"),
+				stego = document.getElementById("stego"),
+				cover = document.getElementById("cover"),
+				message = document.getElementById("message");
+
+			if(action == "decodeFile"){
+				var img = document.getElementById("decodeImg");
+
+				if(!img || !message) return;
+			}
+			else{
+				var img = document.getElementById("img");
+
+				if(!original || !stego) return;
+			}
+			
+
+			var files = evt.target.files; // FileList object
+
+			// Loop through the FileList and render image files as thumbnails.
+			for (var i = 0, f; f = files[i]; i++) {
+
+				// Only process image files.
+				if (!f.type.match('image.*')) {
+					continue;
+				}
+
+				var reader = new FileReader();
+
+				// Closure to capture the file information.
+				reader.onload = (function(theFile) {
+					return function(e) {
+						img.src = e.target.result;
+						img.title = escape(theFile.name);
+						//stego.className = "half invisible";
+						cover.src = "";
+						message.innerHTML="";
+						//message.parentNode.className="invisible";
+						updateCapacity();
+					};
+				})(f);
+
+				// Read in the image file as a data URL.
+				reader.readAsDataURL(f);
+			}
+		}
+
+		function hide() {
+			var stego = document.getElementById("stego"),
+				img = document.getElementById("img"),
+				cover = document.getElementById("cover"),
+				message = document.getElementById("message"),
+				textarea = document.getElementById("text"),
+				password = document.getElementById("encodePassword"),
+				download = document.getElementById("download");
+			if(img && textarea && password) {
+
+			var bf = blowfish;
+			var encryptedData = bf.encrypt(textarea.value, password.value);
+
+				cover.src = steg.encode(encryptedData, img);
+				stego.className = "half";
+				message.innerHTML="";
+				//message.parentNode.className="invisible";
+				download.href=cover.src.replace("image/png", "image/octet-stream");
+			}
+		}
+
+		function read() {
+			var img = document.getElementById("decodeImg"),
+				message = document.getElementById("message"),
+				password = document.getElementById("decodePassword"),
+				decodeMessage = document.getElementById("decodeMessage");
+			if(img && decodeMessage && password) {
+
+				var bf = blowfish;
+				var decryptedData = steg.decode(img);
+				message.innerHTML = bf.decrypt(decryptedData, password.value);
+				if(message.innerHTML !== "") {
+					message.parentNode.className="";
+
+					//decrypt text gotten from the image
+					decodeMessage.innerHTML = message.innerHTML;
+					updateCapacity();
+				}
+			}
+		}
+
+		function updateCapacity() {
+			var img = document.getElementById('img'),
+				textarea = document.getElementById('text');
+			if(img && text)
+				document.getElementById('capacity').innerHTML='('+textarea.value.length + '/' + steg.getHidingCapacity(img) +' chars)';
+		}
+
+		window.onload = function(){
+			document.getElementById('file').addEventListener('change', handleFileSelect, false);
+			document.getElementById('decodeFile').addEventListener('change', handleFileSelect, false);
+			document.getElementById('hide').addEventListener('click', hide, false);
+			document.getElementById('read').addEventListener('click', read, false);
+			document.getElementById('text').addEventListener('keyup', updateCapacity, false);
+			hide();
+			updateCapacity();
+		};
+		</script>
+  </body>
+</html>
